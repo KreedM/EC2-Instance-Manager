@@ -19,6 +19,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         src/main.cpp src/mainwindow.cpp src/mainwindow.ui
         include/EC2Utils.h
         src/CMakeLists.txt src/EC2Utils.cpp src/main.cpp src/mainwindow.cpp src/mainwindow.ui
+        include/EC2InstanceManager.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET EC2-Instance-Manager APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -96,3 +97,5 @@ add_subdirectory("src")
 target_link_libraries(EC2-Utils PUBLIC ${AWSSDK_LINK_LIBRARIES})
 
 target_link_libraries(EC2-Instance-Manager PUBLIC EC2-Utils)
+
+target_link_libraries(EC2-Utils PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)

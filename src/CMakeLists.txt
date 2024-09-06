@@ -1,6 +1,7 @@
 set(
     sources
-    "${PROJECT_SOURCE_DIR}/src/EC2Utils.cpp"
+    "EC2Utils.cpp"
+    "EC2InstanceManager.cpp"
 )
 
 add_library(EC2-Utils STATIC ${sources})

@@ -1,6 +1,5 @@
 #include "EC2Utils.h"
-#include <iostream>
-#include <aws/ec2/EC2Client.h>
+// #include <iostream>
 #include <aws/ec2/model/StartInstancesRequest.h>
 #include <aws/ec2/model/StopInstancesRequest.h>
 #include <aws/ec2/model/RebootInstancesRequest.h>
@@ -9,7 +8,7 @@ EC2Instance::EC2Instance() {
 
 }
 
-EC2Instance::EC2Instance(char *instanceID) : EC2Instance() {
+EC2Instance::EC2Instance(const Aws::String& instanceID) : EC2Instance() {
     this->instanceID = instanceID;
 }
 
@@ -17,13 +16,15 @@ EC2Instance::~EC2Instance() {
     
 }
 
-bool EC2Instance::start() {
+Aws::EC2::Model::StartInstancesOutcome EC2Instance::start() const {
     Aws::Client::ClientConfiguration clientConfig;
     Aws::EC2::EC2Client ec2Client(clientConfig);
 
     Aws::EC2::Model::StartInstancesRequest startRequest;
     startRequest.AddInstanceIds(instanceID);
-    
+    return ec2Client.StartInstances(startRequest);
+
+/*
     // Dry run
     startRequest.SetDryRun(true);
     Aws::EC2::Model::StartInstancesOutcome dryRunOutcome = ec2Client.StartInstances(startRequest);
@@ -53,15 +54,18 @@ bool EC2Instance::start() {
 
         return true;
     }
+*/
 }
 
-bool EC2Instance::stop() {
+Aws::EC2::Model::StopInstancesOutcome EC2Instance::stop() const {
     Aws::Client::ClientConfiguration clientConfig;
     Aws::EC2::EC2Client ec2Client(clientConfig);
 
     Aws::EC2::Model::StopInstancesRequest stopRequest;
     stopRequest.AddInstanceIds(instanceID);
-    
+    return ec2Client.StopInstances(stopRequest);
+
+/*
     // Dry run
     stopRequest.SetDryRun(true);
     Aws::EC2::Model::StopInstancesOutcome dryRunOutcome = ec2Client.StopInstances(stopRequest);
@@ -91,15 +95,18 @@ bool EC2Instance::stop() {
         
         return true;
     }
+*/
 }
 
-bool EC2Instance::reboot() {
+Aws::EC2::Model::RebootInstancesOutcome EC2Instance::reboot() const {
     Aws::Client::ClientConfiguration clientConfig;
     Aws::EC2::EC2Client ec2Client(clientConfig);
 
     Aws::EC2::Model::RebootInstancesRequest request;
     request.AddInstanceIds(instanceID);
+    return ec2Client.RebootInstances(request);
 
+/*
     // Dry run
     request.SetDryRun(true);
     Aws::EC2::Model::RebootInstancesOutcome dryRunOutcome = ec2Client.RebootInstances(request);
@@ -129,4 +136,13 @@ bool EC2Instance::reboot() {
 
         return true;
     }
+*/
+}
+
+void EC2Instance::setInstanceID(const Aws::String& instanceID) {
+    this->instanceID = instanceID;
+}
+
+Aws::String EC2Instance::getInstanceID() const {
+    return instanceID;
 }
