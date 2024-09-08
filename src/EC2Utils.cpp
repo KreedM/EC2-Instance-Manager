@@ -29,12 +29,12 @@ Aws::EC2::Model::StartInstancesOutcome EC2Instance::start() const {
     startRequest.SetDryRun(true);
     Aws::EC2::Model::StartInstancesOutcome dryRunOutcome = ec2Client.StartInstances(startRequest);
     
-    if (dryRunOutcome.IsSuccess()) { 
+    if(dryRunOutcome.IsSuccess()) {
         std::cerr << "Failed dry run to start instance. A dry run should trigger an error." << std::endl;
 
         return false;
     } 
-    else if (dryRunOutcome.GetError().GetErrorType() != Aws::EC2::EC2Errors::DRY_RUN_OPERATION) {
+    else if(dryRunOutcome.GetError().GetErrorType() != Aws::EC2::EC2Errors::DRY_RUN_OPERATION) {
         std::cout << "Failed dry run to start instance " << instanceID << ": " << dryRunOutcome.GetError().GetMessage() << std::endl;
 
         return false;
@@ -44,7 +44,7 @@ Aws::EC2::Model::StartInstancesOutcome EC2Instance::start() const {
     startRequest.SetDryRun(false);
     Aws::EC2::Model::StartInstancesOutcome startInstanceOutcome = ec2Client.StartInstances(startRequest);
 
-    if (!startInstanceOutcome.IsSuccess()) {
+    if(!startInstanceOutcome.IsSuccess()) {
         std::cout << "Failed to start instance " << instanceID << ": " << startInstanceOutcome.GetError().GetMessage() << std::endl;
         
         return false;
@@ -70,12 +70,12 @@ Aws::EC2::Model::StopInstancesOutcome EC2Instance::stop() const {
     stopRequest.SetDryRun(true);
     Aws::EC2::Model::StopInstancesOutcome dryRunOutcome = ec2Client.StopInstances(stopRequest);
 
-    if (dryRunOutcome.IsSuccess()) { 
+    if(dryRunOutcome.IsSuccess()) {
         std::cerr << "Failed dry run to stop instance. A dry run should trigger an error." << std::endl;
 
         return false;
     } 
-    else if (dryRunOutcome.GetError().GetErrorType() != Aws::EC2::EC2Errors::DRY_RUN_OPERATION) {
+    else if(dryRunOutcome.GetError().GetErrorType() != Aws::EC2::EC2Errors::DRY_RUN_OPERATION) {
         std::cout << "Failed dry run to stop instance " << instanceID << ": " << dryRunOutcome.GetError().GetMessage() << std::endl;
 
         return false;
@@ -85,7 +85,7 @@ Aws::EC2::Model::StopInstancesOutcome EC2Instance::stop() const {
     stopRequest.SetDryRun(false);
     Aws::EC2::Model::StopInstancesOutcome stopInstanceOutcome = ec2Client.StopInstances(stopRequest);
 
-    if (!stopInstanceOutcome.IsSuccess()) {
+    if(!stopInstanceOutcome.IsSuccess()) {
         std::cout << "Failed to stop instance " << instanceID << ": " << stopInstanceOutcome.GetError().GetMessage() << std::endl;
 
         return false;
@@ -111,12 +111,12 @@ Aws::EC2::Model::RebootInstancesOutcome EC2Instance::reboot() const {
     request.SetDryRun(true);
     Aws::EC2::Model::RebootInstancesOutcome dryRunOutcome = ec2Client.RebootInstances(request);
 
-    if (dryRunOutcome.IsSuccess()) {
+    if(dryRunOutcome.IsSuccess()) {
         std::cerr << "Failed dry run to reboot on instance. A dry run should trigger an error." << std::endl;
         
         return false;
     } 
-    else if (dryRunOutcome.GetError().GetErrorType() != Aws::EC2::EC2Errors::DRY_RUN_OPERATION) {
+    else if(dryRunOutcome.GetError().GetErrorType() != Aws::EC2::EC2Errors::DRY_RUN_OPERATION) {
         std::cout << "Failed dry run to reboot instance " << instanceID << ": " << dryRunOutcome.GetError().GetMessage() << std::endl;
         
         return false;
@@ -124,10 +124,10 @@ Aws::EC2::Model::RebootInstancesOutcome EC2Instance::reboot() const {
 
     // Actual run
     request.SetDryRun(false);
-    Aws::EC2::Model::RebootInstancesOutcome outcome = ec2Client.RebootInstances(request);
+    Aws::EC2::Model::RebootInstancesOutcome rebootInstanceOutcome = ec2Client.RebootInstances(request);
 
-    if (!outcome.IsSuccess()) {
-        std::cout << "Failed to reboot instance " << instanceID << ": " << outcome.GetError().GetMessage() << std::endl;
+    if(!outcome.IsSuccess()) {
+        std::cout << "Failed to reboot instance " << instanceID << ": " << rebootInstanceOutcome.GetError().GetMessage() << std::endl;
         
         return false;
     } 

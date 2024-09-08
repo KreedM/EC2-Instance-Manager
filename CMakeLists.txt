@@ -16,9 +16,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(EC2-Instance-Manager
         MANUAL_FINALIZATION
         include/mainwindow.h
-        src/main.cpp src/mainwindow.cpp src/mainwindow.ui
+        src/CMakeLists.txt src/main.cpp src/mainwindow.cpp src/mainwindow.ui
         include/EC2Utils.h
-        src/CMakeLists.txt src/EC2Utils.cpp src/main.cpp src/mainwindow.cpp src/mainwindow.ui
         include/EC2InstanceManager.h
     )
 # Define target properties for Android with Qt 6 as:

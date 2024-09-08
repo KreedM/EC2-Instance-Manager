@@ -2,7 +2,7 @@
 #define EC2INSTANCEMANAGER_H
 
 #include "EC2Utils.h"
-#include <unordered_set>
+#include <unordered_map>
 #include <QString>
 
 class EC2InstanceManager {
@@ -10,12 +10,17 @@ class EC2InstanceManager {
         EC2InstanceManager();
         ~EC2InstanceManager();
 
-        bool startEC2Instance(const QString& instanceID) const;
-        bool stopEC2Instance(const QString& instanceID) const;
-        bool rebootEC2Instance(const QString& instanceID) const;
+        QString startEC2Instance(const QString& instanceID) const;
+        QString stopEC2Instance(const QString& instanceID) const;
+        QString rebootEC2Instance(const QString& instanceID) const;
+
+        QString addEC2Instance(const QString& instanceID);
+        QString removeEC2Instance(const QString& instanceID);
+
+        bool contains(const QString& instanceID) const;
 
     private:
-        std::unordered_set<Aws::String, EC2Instance> instances;
+        std::unordered_map<Aws::String, EC2Instance> instances;
         Aws::SDKOptions options;
 };
 
