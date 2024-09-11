@@ -63,6 +63,15 @@ QString EC2InstanceManager::removeEC2Instance(const QString& instanceID) {
     }
 }
 
+std::vector<QString> EC2InstanceManager::listEC2Instances() {
+    std::vector<QString> instancesList;
+
+    for(const std::pair<Aws::String, EC2Instance>& instance : instances)
+        instancesList.push_back(QString::fromStdString(instance.first));
+
+    return instancesList;
+}
+
 bool EC2InstanceManager::contains(const QString& instanceID) const {
     return instances.find(instanceID.toStdString()) != instances.end();
 }

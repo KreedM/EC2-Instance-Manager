@@ -17,6 +17,8 @@ class EC2InstanceManager {
         QString addEC2Instance(const QString& instanceID);
         QString removeEC2Instance(const QString& instanceID);
 
+        std::vector<QString> listEC2Instances();
+
         bool contains(const QString& instanceID) const;
 
     private:
