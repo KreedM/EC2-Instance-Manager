@@ -14,11 +14,17 @@ class EC2Instance {
         Aws::EC2::Model::StopInstancesOutcome stop() const;
         Aws::EC2::Model::RebootInstancesOutcome reboot() const;
 
+        Aws::EC2::Model::DescribeInstancesOutcome describeInstance() const;
+
         void setInstanceID(const Aws::String& instanceID);
         Aws::String getInstanceID() const;
 
+        void setName(const Aws::String& name);
+        Aws::String getName() const;
+
     private:
         Aws::String instanceID;
+        Aws::String name;
 };
 
 #endif

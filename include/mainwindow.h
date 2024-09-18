@@ -31,14 +31,20 @@ private slots:
 
     void on_actionExit_triggered();
 
+    void on_reloadButton_clicked();
+
+    void on_instancesComboBox_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow *ui;
     EC2InstanceManager manager;
 
-    void showInstances();
+    void reloadInstancesComboBox();
+
+    void reloadDescribeTableView();
 
     QString getInstanceID();
 
-    bool saved;
+    bool saved, reloadingComboBox;
 };
 #endif // MAINWINDOW_H
