@@ -74,7 +74,6 @@ std::vector<QString> EC2InstanceManager::listEC2Instances() {
             instancesList.push_back(QString::fromStdString(instance.first) + " (" + QString::fromStdString(instance.second.getName()) + ")");
     }
 
-
     return instancesList;
 }
 
@@ -82,12 +81,18 @@ bool EC2InstanceManager::contains(const QString& instanceID) const {
     return instances.find(instanceID.toStdString()) != instances.end();
 }
 
-
 QString EC2InstanceManager::getEC2InstanceName(const QString& instanceID) const {
     if(!contains(instanceID))
         return "";
 
     return QString::fromStdString(instances.at(instanceID.toStdString()).getName());
+}
+
+QString EC2InstanceManager::getEC2InstanceStatus(const QString& instanceID) const {
+    if(!contains(instanceID))
+        return "";
+
+    return QString::fromStdString(instances.at(instanceID.toStdString()).getState());
 }
 
 QString EC2InstanceManager::describeEC2Instance(const QString& instanceID, std::vector<std::pair<QString, QString>>& descriptions) {
@@ -101,7 +106,7 @@ QString EC2InstanceManager::describeEC2Instance(const QString& instanceID, std::
 
     const Aws::EC2::Model::Instance& instance = outcome.GetResult().GetReservations().front().GetInstances().front();
 
-    QString name = "", tagsStr = "";
+    QString tagsStr = "", name = "";
     const std::vector<Aws::EC2::Model::Tag>& tags = instance.GetTags();
     if(!tags.empty()) {
         if(tags[0].GetKey() == "Name")
@@ -147,6 +152,7 @@ QString EC2InstanceManager::describeEC2Instance(const QString& instanceID, std::
         }
     );
 
+
     descriptions.push_back(
         {
             "Type",
@@ -154,10 +160,11 @@ QString EC2InstanceManager::describeEC2Instance(const QString& instanceID, std::
         }
     );
 
+    instances.at(instanceID.toStdString()).setState(Aws::EC2::Model::InstanceStateNameMapper::GetNameForInstanceStateName(instance.GetState().GetName()));
     descriptions.push_back(
         {
             "State",
-            QString::fromStdString(Aws::EC2::Model::InstanceStateNameMapper::GetNameForInstanceStateName(instance.GetState().GetName()))
+            QString::fromStdString(instances.at(instanceID.toStdString()).getState())
         }
     );
 

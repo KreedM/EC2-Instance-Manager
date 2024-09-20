@@ -10,6 +10,15 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle("EC2 Instance Manager");
+
+
+    QStandardItemModel *model = new QStandardItemModel();
+    ui->describeTableView->setModel(model);
+    //ui->describeTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    //ui->describeTableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->describeTableView->resizeColumnToContents(0);
+    ui->describeTableView->horizontalHeader()->setResizeContentsPrecision(-1);
+    ui->describeTableView->horizontalHeader()->setStretchLastSection(true);
 }
 
 MainWindow::~MainWindow()
@@ -18,42 +27,14 @@ MainWindow::~MainWindow()
 }
 
 QString MainWindow::getInstanceID() {
-    return ui->instancesComboBox->currentText();
-}
+    std::string instanceID = ui->instancesComboBox->currentText().toStdString();
 
-void MainWindow::reloadDescribeTableView() {
-    const QString& instanceID = getInstanceID();
+    int idEnd = instanceID.find(" (");
 
-    if(instanceID.isEmpty())
-        return;
-
-    std::vector<std::pair<QString, QString>> descriptions;
-    const QString& result = manager.describeEC2Instance(instanceID, descriptions);
-
-    if(!result.isEmpty()) {
-        QMessageBox::critical(this, "EC2 Instance Manager", result);
-        qDebug().nospace().noquote() << result << "\n";
-        return;
-    }
-
-    if(!manager.getEC2InstanceName(instanceID).isEmpty())
-        ui->instancesComboBox->setItemText(ui->instancesComboBox->currentIndex(), instanceID + " (" + manager.getEC2InstanceName(instanceID) + ")");
-
-    QStandardItemModel *model = new QStandardItemModel(descriptions.size(), 2);
-    for(int i = 0; i < descriptions.size(); ++i) {
-        model->setItem(i, 0, new QStandardItem(descriptions[i].first));
-        model->setItem(i, 1, new QStandardItem(descriptions[i].second));
-    }
-
-    ui->describeTableView->setModel(model);
-    //ui->describeTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    //ui->describeTableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    ui->describeTableView->resizeColumnToContents(0);
-    ui->describeTableView->horizontalHeader()->setResizeContentsPrecision(-1);
-    ui->describeTableView->horizontalHeader()->setStretchLastSection(true);
-
-    ui->statusbar->showMessage("Described instance " + instanceID + "!", 5000);
-    qDebug().nospace().noquote() << "DESCRIBED instance " << instanceID << "!\n";
+    if(idEnd == std::string::npos)
+        return QString::fromStdString(instanceID);
+    else
+        return QString::fromStdString(instanceID.substr(0, idEnd));
 }
 
 void MainWindow::on_instancesComboBox_currentIndexChanged(int index)
@@ -147,24 +128,6 @@ void MainWindow::on_rebootButton_clicked()
     }
 }
 
-void MainWindow::reloadInstancesComboBox() {
-    reloadingComboBox = true;
-
-    ui->instancesComboBox->clear();
-
-    const std::vector<QString>& instancesList = manager.listEC2Instances();
-
-    for(const QString& instance : instancesList)
-        ui->instancesComboBox->addItem(instance);
-
-    ui->instancesComboBox->clearEditText();
-    ui->instancesComboBox->setCurrentIndex(-1);
-
-    reloadingComboBox = false;
-
-    qDebug().nospace().noquote() << "SHOWED instances in combo box!\n";
-}
-
 void MainWindow::on_addButton_clicked()
 {
     const QString& instanceID = getInstanceID();
@@ -205,7 +168,7 @@ void MainWindow::on_removeButton_clicked()
     manager.removeEC2Instance(instanceID);
 
     reloadInstancesComboBox();
-    //describeInstances(); //To clear out instance info
+    ((QStandardItemModel*)ui->describeTableView->model())->clear();
 
     saved = false;
 
@@ -213,9 +176,95 @@ void MainWindow::on_removeButton_clicked()
     qDebug().nospace().noquote() << "REMOVED instance " << instanceID << "!\n";
 }
 
-
 void MainWindow::on_actionExit_triggered()
 {
     QApplication::exit();
+}
+
+void MainWindow::reloadInstancesComboBox() {
+    reloadingComboBox = true;
+
+    ui->instancesComboBox->clear();
+
+    const std::vector<QString>& instancesList = manager.listEC2Instances();
+
+    for(const QString& instance : instancesList)
+        ui->instancesComboBox->addItem(instance);
+
+    ui->instancesComboBox->clearEditText();
+    ui->instancesComboBox->setCurrentIndex(-1);
+
+    reloadingComboBox = false;
+
+    qDebug().nospace().noquote() << "SHOWED instances in combo box!\n";
+}
+
+void MainWindow::reloadStateLabel() {
+    const QString& state = manager.getEC2InstanceStatus(getInstanceID());
+    QString color = "gray";
+
+    if(state == "running")
+        color = "green";
+    else if(state == "stopping")
+        color = "orange";
+    else if(state == "stopped" || state == "shutting-down")
+        color = "red";
+    else if(state == "terminated")
+        color = "maroon";
+
+    ui->stateLabelActual->setStyleSheet("QLabel {color : " + color + ";}");
+    ui->stateLabelActual->setText(state.toUpper());
+}
+
+void MainWindow::reloadDescribeTableView() {
+    const QString& instanceID = getInstanceID();
+
+    if(instanceID.isEmpty())
+        return;
+
+    QStandardItemModel *model = (QStandardItemModel*)ui->describeTableView->model();
+    model->clear();
+
+    std::vector<std::pair<QString, QString>> descriptions;
+
+    if(ui->describeInstanceCheckBox->isChecked()) {
+        const QString& describeInstanceResult = manager.describeEC2Instance(instanceID, descriptions);
+
+        if(!describeInstanceResult.isEmpty()) {
+            QMessageBox::critical(this, "EC2 Instance Manager", describeInstanceResult);
+            qDebug().nospace().noquote() << describeInstanceResult << "\n";
+            return;
+        }
+
+        if(!manager.getEC2InstanceName(instanceID).isEmpty())
+            ui->instancesComboBox->setItemText(ui->instancesComboBox->currentIndex(), instanceID + " (" + manager.getEC2InstanceName(instanceID) + ")");
+
+        if(!manager.getEC2InstanceStatus(instanceID).isEmpty())
+            reloadStateLabel();
+    }
+
+    /*
+    if(ui->describeInstanceCheckBox->isChecked()) {
+        const QString& describeInstanceResult = manager.describeEC2Instance(instanceID, descriptions);
+
+        if(!describeInstanceResult.isEmpty()) {
+            QMessageBox::critical(this, "EC2 Instance Manager", describeInstanceResult);
+            qDebug().nospace().noquote() << describeInstanceResult << "\n";
+            return;
+        }
+    }
+    */
+
+    if(descriptions.size() == 0)
+        return;
+
+    model->setRowCount(descriptions.size()); model->setColumnCount(2);
+    for(int i = 0; i < descriptions.size(); ++i) {
+        model->setItem(i, 0, new QStandardItem(descriptions[i].first));
+        model->setItem(i, 1, new QStandardItem(descriptions[i].second));
+    }
+
+    ui->statusbar->showMessage("Described instance " + instanceID + "!", 5000);
+    qDebug().nospace().noquote() << "DESCRIBED instance " << instanceID << "!\n";
 }
 

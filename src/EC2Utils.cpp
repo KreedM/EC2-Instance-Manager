@@ -67,3 +67,11 @@ void EC2Instance::setName(const Aws::String& name) {
 Aws::String EC2Instance::getName() const {
     return name;
 }
+
+void EC2Instance::setState(const Aws::String& state) {
+    this->state = state;
+}
+
+Aws::String EC2Instance::getState() const {
+    return state;
+}

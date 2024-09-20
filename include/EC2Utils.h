@@ -22,9 +22,13 @@ class EC2Instance {
         void setName(const Aws::String& name);
         Aws::String getName() const;
 
+        void setState(const Aws::String& state);
+        Aws::String getState() const;
+
     private:
         Aws::String instanceID;
         Aws::String name;
+        Aws::String state;
 };
 
 #endif

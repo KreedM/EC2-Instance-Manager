@@ -39,11 +39,13 @@ private:
     Ui::MainWindow *ui;
     EC2InstanceManager manager;
 
+    QString getInstanceID();
+
     void reloadInstancesComboBox();
 
-    void reloadDescribeTableView();
+    void reloadStateLabel();
 
-    QString getInstanceID();
+    void reloadDescribeTableView();
 
     bool saved, reloadingComboBox;
 };
