@@ -35,6 +35,8 @@ private slots:
 
     void on_instancesComboBox_currentIndexChanged(int index);
 
+    void on_filterLineEdit_textChanged(const QString &arg1);
+
 private:
     Ui::MainWindow *ui;
     EC2InstanceManager manager;
@@ -46,6 +48,8 @@ private:
     void reloadStateLabel();
 
     void reloadDescribeTableView();
+
+    void filterDescribeTableView();
 
     bool saved, reloadingComboBox;
 };
