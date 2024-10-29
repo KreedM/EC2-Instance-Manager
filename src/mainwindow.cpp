@@ -16,7 +16,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->describeTableView->setModel(model);
     //ui->describeTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     //ui->describeTableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    ui->describeTableView->resizeColumnToContents(0);
     ui->describeTableView->horizontalHeader()->setResizeContentsPrecision(-1);
     ui->describeTableView->horizontalHeader()->setStretchLastSection(true);
 }
@@ -237,6 +236,8 @@ void MainWindow::filterDescribeTableView() {
             }
         }
     }
+
+    ui->describeTableView->resizeColumnToContents(0);
 }
 
 void MainWindow::reloadDescribeTableView() {
@@ -250,7 +251,9 @@ void MainWindow::reloadDescribeTableView() {
 
     std::vector<std::pair<QString, QString>> descriptions;
 
-    const QString& describeInstanceResult = manager.describeEC2Instance(instanceID, descriptions);
+    const QString& describeInstanceResult = manager.describeEC2Instance(instanceID, descriptions,
+                                                                        ui->instanceSummaryCheckBox->isChecked(), ui->instanceDetailsCheckBox->isChecked(),
+                                                                        ui->hostAndPlacementGroupCheckBox->isChecked(), ui->capacityReservationCheckBox->isChecked());
 
     if(!describeInstanceResult.isEmpty()) {
         QMessageBox::critical(this, "EC2 Instance Manager", describeInstanceResult);
@@ -258,14 +261,12 @@ void MainWindow::reloadDescribeTableView() {
         return;
     }
 
-    if(!manager.getEC2InstanceName(instanceID).isEmpty())
-        ui->instancesComboBox->setItemText(ui->instancesComboBox->currentIndex(), instanceID + " (" + manager.getEC2InstanceName(instanceID) + ")");
-
-    if(!manager.getEC2InstanceStatus(instanceID).isEmpty())
-        reloadStateLabel();
-
     if(descriptions.size() == 0)
         return;
+
+    ui->instancesComboBox->setItemText(ui->instancesComboBox->currentIndex(), instanceID + " (" + manager.getEC2InstanceName(instanceID) + ")");
+
+    reloadStateLabel();
 
     model->setRowCount(descriptions.size()); model->setColumnCount(2);
     for(int i = 0; i < descriptions.size(); ++i) {

@@ -14,8 +14,7 @@ class EC2InstanceManager {
         QString stopEC2Instance(const QString& instanceID) const;
         QString rebootEC2Instance(const QString& instanceID) const;
 
-        QString describeEC2Instance(const QString& instanceID, std::vector<std::pair<QString, QString>>& descriptions);
-        //QString describeEC2Instance(const QString& instanceID, std::vector<std::pair<QString, QString>>& descriptions);
+        QString describeEC2Instance(const QString& instanceID, std::vector<std::pair<QString, QString>>& descriptions, bool instanceSummary, bool instanceDetails, bool hostAndPlacementGroup, bool capacityReservation);
 
         QString addEC2Instance(const QString& instanceID);
         QString removeEC2Instance(const QString& instanceID);
@@ -28,6 +27,11 @@ class EC2InstanceManager {
         bool contains(const QString& instanceID) const;
 
     private:
+        void describeEC2InstanceSummary(const Aws::EC2::Model::Instance& instance, std::vector<std::pair<QString, QString>>& descriptions);
+        void describeEC2InstanceDetails(const Aws::EC2::Model::Instance& instance, std::vector<std::pair<QString, QString>>& descriptions);
+        void describeEC2InstanceHostAndPlacementGroup(const Aws::EC2::Model::Instance& instance, std::vector<std::pair<QString, QString>>& descriptions, const Aws::String& reservationID);
+        void describeEC2InstanceCapacityReservation(const Aws::EC2::Model::Instance& instance, std::vector<std::pair<QString, QString>>& descriptions);
+
         std::unordered_map<Aws::String, EC2Instance> instances;
         Aws::SDKOptions options;
 };
