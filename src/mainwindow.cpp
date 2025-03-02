@@ -3,6 +3,11 @@
 
 #include <QMessageBox>
 #include <QStandardItemModel>
+#include <QFileDialog>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QTextStream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -79,7 +84,6 @@ void MainWindow::on_startButton_clicked()
     }
 }
 
-
 void MainWindow::on_stopButton_clicked()
 {
     const QString& instanceID = getInstanceID();
@@ -102,7 +106,6 @@ void MainWindow::on_stopButton_clicked()
         qDebug().nospace().noquote() << result << "\n";
     }
 }
-
 
 void MainWindow::on_rebootButton_clicked()
 {
@@ -150,9 +153,8 @@ void MainWindow::on_addButton_clicked()
     reloadInstancesComboBox();
     ui->instancesComboBox->setCurrentIndex(ui->instancesComboBox->findText(instanceID));
 
-    saved = false;
+    this->saved = false;
 }
-
 
 void MainWindow::on_removeButton_clicked()
 {
@@ -169,10 +171,11 @@ void MainWindow::on_removeButton_clicked()
     reloadInstancesComboBox();
     ((QStandardItemModel*)ui->describeTableView->model())->clear();
 
-    saved = false;
-
+    ui->stateLabelActual->clear();
     ui->statusbar->showMessage("Removed instance " + instanceID + "!", 5000);
     qDebug().nospace().noquote() << "REMOVED instance " << instanceID << "!\n";
+
+    this->saved = false;
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -261,7 +264,7 @@ void MainWindow::reloadDescribeTableView() {
         return;
     }
 
-    if(descriptions.size() == 0)
+    if(descriptions.empty())
         return;
 
     ui->instancesComboBox->setItemText(ui->instancesComboBox->currentIndex(), instanceID + " (" + manager.getEC2InstanceName(instanceID) + ")");
@@ -278,5 +281,157 @@ void MainWindow::reloadDescribeTableView() {
 
     ui->statusbar->showMessage("Described instance " + instanceID + "!", 5000);
     qDebug().nospace().noquote() << "DESCRIBED instance " << instanceID << "!\n";
+
+    this->saved = false;
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Open", QDir::homePath(), "Instance List File (*.json)");
+
+    if(filePath.isEmpty())
+        return;
+
+    qDebug() << "OPENING JSON FILE\n";
+
+    QFile file(filePath);
+    if(!file.open(QFile::ReadOnly)) {
+        qDebug().nospace() << "Failed to open " << filePath << "!\n";
+        QMessageBox::critical(this, "EC2 Instance Manager", "Failed to open \"" + filePath + "\"!");
+        return;
+    }
+
+    QJsonParseError error;
+    const QJsonDocument& document = QJsonDocument::fromJson(file.readAll(), &error);
+    if(document.isNull()) {
+        qDebug().nospace() << "Failed to parse " << filePath << "!\n";
+        QMessageBox::critical(this, "EC2 Instance Manager", "Failed to parse \"" + filePath + "\": " + error.errorString() + "!");
+        return;
+    }
+
+    if(!document.isArray()) {
+        qDebug().nospace() << "Invalid Json file: " << filePath << "!\n";
+        QMessageBox::critical(this, "EC2 Instance Manager", "Invalid Json file: \"" + filePath + "\"!");
+        return;
+    }
+    const QJsonArray& array = document.array();
+
+    std::vector<std::pair<QString, QString>> descriptions;
+    for(const QJsonValue& value : array) { // First for loop to validate Json file
+        if(!value.isObject()) {
+            qDebug().nospace() << "Invalid Json file: " << filePath << "!\n";
+            QMessageBox::critical(this, "EC2 Instance Manager", "Invalid Json file: \"" + filePath + "\"!");
+            return;
+        }
+
+        const QJsonObject& object = value.toObject();
+        if(!object.contains("id") || !object.contains("name")) {
+            qDebug().nospace() << "Invalid Json file: " << filePath << "!\n";
+            QMessageBox::critical(this, "EC2 Instance Manager", "Invalid Json file: \"" + filePath + "\"!");
+            return;
+        }
+
+        const QJsonValue& id = object.value("id"), name = object.value("name");
+        if(!id.isString() || !name.isString()) {
+            qDebug().nospace() << "Invalid Json file: " << filePath << "!\n";
+            QMessageBox::critical(this, "EC2 Instance Manager", "Invalid Json file: \"" + filePath + "\"!");
+            return;
+        }
+    }
+
+    manager.clearEC2Instances();
+    for(const QJsonValue& value : array) {
+        const QJsonObject& object = value.toObject();
+        const QJsonValue& id = object.value("id"), name = object.value("name");
+
+        manager.addEC2Instance(id.toString());
+        manager.setEC2InstanceName(id.toString(), name.toString());
+    }
+
+    reloadInstancesComboBox();
+    ((QStandardItemModel*)ui->describeTableView->model())->clear();
+
+    ui->statusbar->showMessage("Loaded \"" + filePath + "\"!", 5000);
+
+    this->currPath = filePath;
+    this->saved = true;
+    file.close();
+}
+
+void MainWindow::on_actionSave_As_triggered()
+{
+    QString filePath = QFileDialog::getSaveFileName(this, "Save as", QDir::homePath(), "Instance List File (*.json)");
+
+    if(filePath.isEmpty())
+        return;
+
+    qDebug() << "SAVING TO JSON FILE\n";
+
+    QFile file(filePath);
+    if(!file.open(QFile::WriteOnly)) {
+        qDebug().nospace() << "Failed to save to " << filePath << "!\n";
+        QMessageBox::critical(this, "EC2 Instance Manager", "Failed to save to \"" + filePath + "\"!");
+        return;
+    }
+
+    QJsonArray instances;
+    const std::vector<std::pair<QString, QString>>& instancesList = manager.saveEC2Instances();
+    for(const std::pair<QString, QString> instance : instancesList) {
+        QJsonObject instanceObject;
+        instanceObject.insert("id", QJsonValue(instance.first));
+        instanceObject.insert("name", QJsonValue(instance.second));
+
+        instances.append(instanceObject);
+    }
+
+    QJsonDocument instancesJson(instances);
+    QTextStream textStream(&file);
+    textStream << instancesJson.toJson();
+
+    ui->statusbar->showMessage("Saved instance list to \"" + filePath + "\"!", 5000);
+
+    this->currPath = filePath;
+    this->saved = true;
+    file.close();
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    if(this->currPath.isEmpty())
+        return;
+
+    if(this->saved)
+        return;
+
+    if(QMessageBox::question(this, "EC2 Instance Manager", "Save instance list \"" + this->currPath + "\"?") == QMessageBox::No)
+        return;
+
+    qDebug() << "SAVING JSON FILE\n";
+
+    QFile file(currPath);
+    if(!file.open(QFile::WriteOnly)) {
+        qDebug().nospace() << "Failed to save " << currPath << "!\n";
+        QMessageBox::critical(this, "EC2 Instance Manager", "Failed to save \"" + currPath + "\"!");
+        return;
+    }
+
+    QJsonArray instances;
+    const std::vector<std::pair<QString, QString>>& instancesList = manager.saveEC2Instances();
+    for(const std::pair<QString, QString> instance : instancesList) {
+        QJsonObject instanceObject;
+        instanceObject.insert("id", QJsonValue(instance.first));
+        instanceObject.insert("name", QJsonValue(instance.second));
+
+        instances.append(instanceObject);
+    }
+
+    QJsonDocument instancesJson(instances);
+    QTextStream textStream(&file);
+    textStream << instancesJson.toJson();
+
+    ui->statusbar->showMessage("Saved instance list \"" + currPath + "\"!", 5000);
+
+    this->saved = true;
+    file.close();
 }
 

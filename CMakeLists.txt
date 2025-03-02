@@ -16,9 +16,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(EC2-Instance-Manager
         MANUAL_FINALIZATION
         include/mainwindow.h
-        src/CMakeLists.txt src/main.cpp src/mainwindow.cpp src/mainwindow.ui
-        include/EC2Utils.h
-        include/EC2InstanceManager.h
+        src/main.cpp src/mainwindow.cpp src/mainwindow.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET EC2-Instance-Manager APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -67,7 +65,7 @@ endif()
 
 # Set include directory
 
-target_include_directories(EC2-Instance-Manager PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(EC2-Instance-Manager PRIVATE "${PROJECT_SOURCE_DIR}/include")
 
 # AWS
 
@@ -95,6 +93,6 @@ add_subdirectory("src")
 
 target_link_libraries(EC2-Utils PUBLIC ${AWSSDK_LINK_LIBRARIES})
 
-target_link_libraries(EC2-Instance-Manager PUBLIC EC2-Utils)
+target_link_libraries(EC2-Instance-Manager PRIVATE EC2-Utils)
 
-target_link_libraries(EC2-Utils PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(EC2-Utils PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)

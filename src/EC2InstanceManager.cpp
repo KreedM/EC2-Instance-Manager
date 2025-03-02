@@ -77,6 +77,19 @@ std::vector<QString> EC2InstanceManager::listEC2Instances() {
     return instancesList;
 }
 
+std::vector<std::pair<QString, QString>> EC2InstanceManager::saveEC2Instances() {
+    std::vector<std::pair<QString, QString>> instancesList;
+
+    for(const std::pair<Aws::String, EC2Instance>& instance : instances)
+        instancesList.push_back({QString::fromStdString(instance.first), QString::fromStdString(instance.second.getName())});
+
+    return instancesList;
+}
+
+void EC2InstanceManager::clearEC2Instances() {
+    instances.clear();
+}
+
 bool EC2InstanceManager::contains(const QString& instanceID) const {
     return instances.find(instanceID.toStdString()) != instances.end();
 }
@@ -86,6 +99,13 @@ QString EC2InstanceManager::getEC2InstanceName(const QString& instanceID) const 
         return "";
 
     return QString::fromStdString(instances.at(instanceID.toStdString()).getName());
+}
+
+void EC2InstanceManager::setEC2InstanceName(const QString& instanceID, const QString& name) {
+    if(!contains(instanceID))
+        return;
+
+    instances.at(instanceID.toStdString()).setName(name.toStdString());
 }
 
 QString EC2InstanceManager::getEC2InstanceStatus(const QString& instanceID) const {
@@ -122,7 +142,7 @@ QString EC2InstanceManager::describeEC2Instance(const QString& instanceID, std::
         }
     }
 
-    instances.at(instanceID.toStdString()).setName(name.toStdString());
+    setEC2InstanceName(instanceID, name);
 
     descriptions.push_back(
         {

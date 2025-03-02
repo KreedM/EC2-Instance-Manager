@@ -37,6 +37,12 @@ private slots:
 
     void on_filterLineEdit_textChanged(const QString &arg1);
 
+    void on_actionOpen_triggered();
+
+    void on_actionSave_triggered();
+
+    void on_actionSave_As_triggered();
+
 private:
     Ui::MainWindow *ui;
     EC2InstanceManager manager;
@@ -50,6 +56,8 @@ private:
     void reloadDescribeTableView();
 
     void filterDescribeTableView();
+
+    QString currPath = "";
 
     bool saved, reloadingComboBox;
 };
